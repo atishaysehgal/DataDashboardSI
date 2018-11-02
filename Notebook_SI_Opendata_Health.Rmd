@@ -1,0 +1,213 @@
+---
+title: "Health Data"
+output:
+  html_document: default
+  html_notebook: default
+---
+
+
+```{r}
+library(ggplot2)
+library(scales)
+library(dbplyr)
+library(readr)
+library(dplyr)
+library(RSocrata)
+```
+
+
+# Healthcare
+
+
+Primary Data Sources: Here we mostly use DataUSA's API for the County Health Records file. The goal is to plot Richmond County's values in all years against those of the broader US and New York City in particular.
+
+
+
+The location IDs for NYC counties are:
+
+* Richmond:  05000US36085
+
+* Queens: 05000US36081
+
+* Kings: 05000US36047
+
+* New York: 05000US36061
+
+* Bronx: 05000US36005
+
+
+Headline Measures:
+
+   
+# Insurance
+
+
+First we use the CHR data for the uninsured rate and for physician density.
+
+```{r}
+
+#Download main health files with API
+api_insurance<-"http://api.datausa.io/api/csv/?show=geo&sumlevel=county&year=all&required=uninsured,primary_care_physicians,mental_health_providers,dentists,other_primary_care_providers"
+
+insurance<-read_csv(api_insurance)
+insurance<-subset(insurance, geo=="05000US36085"|geo=="05000US36081"|geo=="05000US36047"|geo=="05000US36061"|geo=="05000US36005")
+
+
+
+insurance$County<-insurance$geo_name
+insurance$year2<-as.character(insurance$year)
+insurance$year3<-as.Date(paste0(insurance$year2, '-01-01'))
+insurance$date<-as.Date(insurance$year3)
+
+```
+
+Next we get a rough measure of health spending, Medicare reimbursement rates per capita, from the Dartmouth Health Atlas (accessed with DataUSA)
+
+```{r}
+api_reimbursement<-"https://api.datausa.io/api/csv/?sort=desc&show=geo&required=total_reimbursements_b&sumlevel=county&year=all&where=geo%3A%5E05000US36"
+reimbursement<-read_csv(api_reimbursement)
+reimbursement<-subset(reimbursement, geo=="05000US36085"|geo=="05000US36081"|geo=="05000US36047"|geo=="05000US36061"|geo=="05000US36005")
+reimbursement$County<-reimbursement$geo_name
+reimbursement$year2<-as.character(reimbursement$year)
+reimbursement$year3<-as.Date(paste0(reimbursement$year2, '-01-01'))
+reimbursement$date<-as.Date(reimbursement$year3)
+```
+
+
+### Uninsured %
+
+```{r}
+
+ggplot(insurance, aes(x=date,  y=uninsured))+ geom_point()+ geom_line(aes(color = County), size = 1)+
+scale_x_date(breaks = date_breaks("years"),labels=date_format("%Y"))+ylab("Uninsured")
+
+```
+
+  
+### Medicare Reimbursements
+
+```{r}
+ggplot(reimbursement, aes(x=date,  y=total_reimbursements_b))+ geom_point()+ geom_line(aes(color = County), size = 1)+
+scale_x_date(breaks = date_breaks("years"),labels=date_format("%Y"))+ylab("Average Medicare Reimbursement")
+```
+
+
+
+### Primary Care Physicians Per 100k
+
+```{r}
+insurance$pcp_numeric<-as.numeric(insurance$primary_care_physicians)
+ggplot(insurance, aes(x=date,  y=pcp_numeric))+ geom_point()+ geom_line(aes(color = County), size = 1)+
+scale_x_date(breaks = date_breaks("years"),labels=date_format("%Y"))+ylab("Primary Care Physicians")
+
+```
+
+
+### Dentists Per 100k
+
+```{r}
+insurance$dentists_numeric<-as.numeric(insurance$dentists)
+ggplot(insurance, aes(x=date,  y=dentists_numeric))+ geom_point()+ geom_line(aes(color = County), size = 1)+
+scale_x_date(breaks = date_breaks("years"),labels=date_format("%Y"))+ylab("Dentists per 100k")
+
+```
+
+### Mental Health Professionals Per 100k
+
+```{r}
+insurance$mental_numeric<-as.numeric(insurance$mental_health_providers)
+ggplot(insurance, aes(x=date,  y=mental_numeric))+ geom_point()+ geom_line(aes(color = County), size = 1)+
+scale_x_date(breaks = date_breaks("years"),labels=date_format("%Y"))+ylab("Mental Health Professionals per 100k")
+
+```
+
+
+### Other Primary Care Providers Per 100k
+
+```{r}
+insurance$other_numeric<-as.numeric(insurance$other_primary_care_providers)
+ggplot(insurance, aes(x=date,  y=mental_numeric))+ geom_point()+ geom_line(aes(color = County), size = 1)+
+scale_x_date(breaks = date_breaks("years"),labels=date_format("%Y"))+ylab("Other PCP per 100k")
+
+```
+
+  
+#  Health Risks
+
+```{r}
+
+#Download main health files with API
+api_health<-"http://api.datausa.io/api/csv/?show=geo&sumlevel=county&year=all&required=adult_obesity,adult_smoking,motor_vehicle_crash_deaths,physical_inactivity,excessive_drinking,diabetes"
+healthdata<-read_csv(api_health)
+healthdata<-subset(healthdata, geo=="05000US36085"|geo=="05000US36081"|geo=="05000US36047"|geo=="05000US36061"|geo=="05000US36005")
+
+
+
+healthdata$County<-healthdata$geo_name
+healthdata$year2<-as.character(healthdata$year)
+healthdata$year3<-as.Date(paste0(healthdata$year2, '-01-01'))
+healthdata$date<-as.Date(healthdata$year3)
+
+```
+
+### Traffic Deaths
+    
+    
+```{r}
+
+healthdata$Traffic_Deaths<-as.numeric(healthdata$motor_vehicle_crash_deaths)
+ggplot(healthdata, aes(x=date,  y=Traffic_Deaths))+ geom_point()+ geom_line(aes(color = County), size = 1)+
+scale_x_date(breaks = date_breaks("years"),labels=date_format("%Y"))+ylab("Traffic Deaths per 100k") 
+```
+
+
+  
+### Physical Inactivity
+    
+```{r}
+
+healthdata$Inactivity<-as.numeric(healthdata$physical_inactivity)
+ggplot(healthdata, aes(x=date,  y=Inactivity))+ geom_point()+ geom_line(aes(color = County), size = 1)+
+scale_x_date(breaks = date_breaks("years"),labels=date_format("%Y"))+ylab("Percent Adults Inactive") 
+
+```
+  
+### Obesity
+    
+```{r}
+
+healthdata$Obese<-as.numeric(healthdata$adult_obesity)
+ggplot(healthdata, aes(x=date,  y=Obese))+ geom_point()+ geom_line(aes(color = County), size = 1)+
+scale_x_date(breaks = date_breaks("years"),labels=date_format("%Y"))+ylab("Percent Adults Obese") 
+
+```
+  
+### Smoking Problems
+    
+```{r}
+
+healthdata$Smoking<-as.numeric(healthdata$adult_smoking)
+ggplot(healthdata, aes(x=date,  y=Smoking))+ geom_point()+ geom_line(aes(color = County), size = 1)+
+scale_x_date(breaks = date_breaks("years"),labels=date_format("%Y"))+ylab("Percent Adults who Smoke") 
+
+```
+  
+### Drinking Problems
+
+    
+```{r}
+
+healthdata$Drinking<-as.numeric(healthdata$excessive_drinking)
+ggplot(healthdata, aes(x=date,  y=Drinking))+ geom_point()+ geom_line(aes(color = County), size = 1)+
+scale_x_date(breaks = date_breaks("years"),labels=date_format("%Y"))+ylab("Percent Adults who Drink to Excess") 
+
+```
+
+### Diabetes
+```{r}
+
+
+ggplot(healthdata, aes(x=date,  y=diabetes))+ geom_point()+ geom_line(aes(color = County), size = 1)+
+scale_x_date(breaks = date_breaks("years"),labels=date_format("%Y"))+ylab("Percent with Diabetes") 
+
+```

@@ -1,0 +1,91 @@
+---
+title: "Education Data"
+output:
+  html_document: default
+  html_notebook: default
+---
+
+
+```{r}
+library(ggplot2)
+library(scales)
+library(dbplyr)
+library(readr)
+library(dplyr)
+library(RSocrata)
+```
+
+
+# English Outcomes
+
+```{r}
+English<-read.socrata("https://data.cityofnewyork.us/resource/9j5y-xbjp.json")
+English$year2<-as.character(English$year)
+English$year3<-as.Date(paste0(English$year2, '-01-01'))
+English$date<-as.Date(English$year3)
+```
+
+
+### English: Percent of Eighth Graders Proficient 
+
+```{r}
+English_eight<-subset(English, grade=="8")
+English_eight$proficient<-as.numeric(English_eight$level3_4_)
+ggplot(English_eight, aes(x=date,  y=proficient))+ geom_point()+ geom_line(aes(color = borough), size = 1)+
+scale_x_date(breaks = date_breaks("years"),labels=date_format("%Y"))+ylab("Proficient--Percent of Eighth Graders") 
+```
+
+# Math Outcomes
+
+```{r}
+Math<-read.socrata("https://data.cityofnewyork.us/resource/h4qa-itnu.json")
+Math$year2<-as.character(Math$year)
+Math$year3<-as.Date(paste0(Math$year2, '-01-01'))
+Math$date<-as.Date(Math$year3)
+```
+
+
+### Math: Percent of Eighth Graders Proficient
+
+
+```{r}
+Math_eight<-subset(Math, grade=="8")
+Math_eight$proficient<-as.numeric(Math_eight$level3_4_)
+ggplot(Math_eight, aes(x=date,  y=proficient))+ geom_point()+ geom_line(aes(color = borough), size = 1)+
+scale_x_date(breaks = date_breaks("years"),labels=date_format("%Y"))+ylab("Proficient--Percent of Eighth Graders") 
+```
+
+# Graduation Outcomes
+
+```{r}
+Graduation<-read.socrata("https://data.cityofnewyork.us/resource/euga-q82w.json")
+Graduation$year2<-as.character(Graduation$cohort_year)
+Graduation$year3<-as.Date(paste0(Graduation$year2, '-01-01'))
+Graduation$date<-as.Date(Graduation$year3)
+Graduation_Narrow<-subset(Graduation, demographic_category=="All Students")
+Graduation_Narrow<-subset(Graduation_Narrow, cohort=="4 year June")
+```
+
+### Graduation
+
+```{r}
+Graduation_Narrow$graduates_numeric<-as.numeric(Graduation_Narrow$total_grads_of_cohort)
+ggplot(Graduation_Narrow, aes(x=date,  y=graduates_numeric))+ geom_point()+ geom_line(aes(color = borough), size = 1)+
+scale_x_date(breaks = date_breaks("years"),labels=date_format("%Y"))+ylab("On Time Grads--Percent of Cohort") 
+```
+
+
+
+### Advanced Regents
+
+```{r}
+Graduation_Narrow$advanced_regents_of_cohort_numeric<-as.numeric(Graduation_Narrow$advanced_regents_of_cohort)
+ggplot(Graduation_Narrow, aes(x=date,  y=advanced_regents_of_cohort_numeric))+ geom_point()+ geom_line(aes(color = borough), size = 1)+
+scale_x_date(breaks = date_breaks("years"),labels=date_format("%Y"))+ylab("Advanced Regents--Percent of Cohort") 
+```
+
+
+
+
+
+
