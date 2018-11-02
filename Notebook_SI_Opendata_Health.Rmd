@@ -81,6 +81,8 @@ reimbursement$date<-as.Date(reimbursement$year3)
 ggplot(insurance, aes(x=date,  y=uninsured))+ geom_point()+ geom_line(aes(color = County), size = 1)+
 scale_x_date(breaks = date_breaks("years"),labels=date_format("%Y"))+ylab("Uninsured")
 
+ggplot(insurance, aes(year, uninsured, color = County)) + geom_point(stat = "Identity") + geom_line()
+
 ```
 
   
